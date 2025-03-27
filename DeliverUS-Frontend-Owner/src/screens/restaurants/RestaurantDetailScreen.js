@@ -1,8 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, View, FlatList, ImageBackground, Image, Pressable } from 'react-native'
+import { StyleSheet, View, FlatList, ImageBackground, Image } from 'react-native'
 import { showMessage } from 'react-native-flash-message'
-import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { getDetail } from '../../api/RestaurantEndpoints'
 import ImageCard from '../../components/ImageCard'
 import TextRegular from '../../components/TextRegular'
@@ -11,18 +10,25 @@ import * as GlobalStyles from '../../styles/GlobalStyles'
 import defaultProductImage from '../../../assets/product.jpeg'
 import { API_BASE_URL } from '@env'
 
-
-export default function RestaurantDetailScreen({ navigation, route }) {
+export default function RestaurantDetailScreen ({ navigation, route }) {
+  const { id } = route.params
   const [restaurant, setRestaurant] = useState({})
-
   useEffect(() => {
-    console.log('Loading restaurant, please wait 2 seconds')
-    setTimeout(() => {
-      const fetchedRestaurant = getDetail(route.params.id)
-      setRestaurant(fetchedRestaurant)
-      console.log('Restaurant loaded')
-    }, 2000)
-  }, [])
+    async function fetchDetailRestaurant () {
+      try {
+        const fetchedDetailRestaurant = await getDetail(id)
+        setRestaurant(fetchedDetailRestaurant)
+      } catch (err) {
+        showMessage({
+          message: `There was an error while retrieving product ${err}`,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashTextStyle
+        })
+      }
+    }
+    fetchDetailRestaurant()
+  }, [route])
 
   const renderHeader = () => {
     return (
@@ -51,6 +57,16 @@ export default function RestaurantDetailScreen({ navigation, route }) {
     )
   }
 
+  const renderNoComponent = () => {
+    return (
+      <Image
+        source={{
+          uri: 'https://www.ammarket.com/wp-content/uploads/2021/09/MANDARINA_AMMARKET.COM_1.jpg.webp'
+        }}
+      />
+    )
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -58,6 +74,7 @@ export default function RestaurantDetailScreen({ navigation, route }) {
         style={styles.container}
         data={restaurant.products}
         renderItem={renderProduct}
+        ListEmptyComponent={renderNoComponent}
         keyExtractor={item => item.id.toString()}
       />
     </View>
@@ -101,5 +118,5 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginRight: 5,
     color: GlobalStyles.brandSecondary
-  },
+  }
 })
